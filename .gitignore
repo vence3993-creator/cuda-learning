@@ -1,0 +1,6 @@
+*.o
+*.out
+build/
+# 无扩展名的可执行文件
+vectoradd
+*.deb
