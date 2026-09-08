@@ -3,4 +3,14 @@
 build/
 # 无扩展名的可执行文件
 vectoradd
+divergence
+bandwith_scan
+pinned
 *.deb
+# 实验数据
+*.csv
+*.png
+#python
+.venv/
+__pycache__/
+
