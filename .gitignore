@@ -2,6 +2,16 @@
 *.out
 build/
 # 无扩展名的可执行文件
+vecadd
+vecadd_prof
+hello
+transpose
+deviceQuery
+bw_sweep
+bench
+bench1
+bin/
+build/
 vectoradd
 divergence
 bandwith_scan
