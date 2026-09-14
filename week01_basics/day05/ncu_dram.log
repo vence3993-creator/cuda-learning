@@ -1,0 +1,60 @@
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 28477 (/home/cheng/CUDA/week01_basics/day05/roofline_sweep)
+==PROF== Profiling "_Z9fma_sweepILi4EEvPKfPfm": 0%....50%....100% - 1 pass
+==PROF== Profiling "_Z9fma_sweepILi4EEvPKfPfm": 0%....50%....100% - 1 pass
+GPU              : NVIDIA GeForce RTX 5060 Ti (sm_120)
+SM 数量          : 36
+L2 cache         : 32.0 MB   <- 工作集必须远大于它，否则测的是 L2
+显存容量         : 7.9 GB
+理论显存带宽峰值 : 448.0 GB/s
+理论 FP32 峰值   : 24256.5 GFLOP/s
+平衡点 (ridge)   : 54.1 FLOP/B
+
+n = 67108864, 工作集 = 512 MiB (L2 的 16 倍)
+
+正确性自检通过（K=64）
+
+kernel                  median/ms     min/ms     max/ms       GB/s    GFLOP/s
+------------------------------------------------------------------------------
+K=4     AI=1              1.40061    1.38426    1.83238     383.31     383.31
+K=8     AI=2              1.40061    1.38627    1.75459     383.31     766.63
+K=16    AI=4              1.40131    1.38522    1.86762     383.12    1532.48
+K=32    AI=8              1.40160    1.37914    1.76282     383.04    3064.33
+K=64    AI=16             1.40470    1.35859    1.81715     382.20    6115.12
+K=128   AI=32             1.40634    1.39926    1.84368     381.75   12216.05
+K=192   AI=48             1.61635    1.61360    1.96637     332.15   15943.19
+K=256   AI=64             1.94336    1.94214    2.29149     276.26   17680.58
+K=320   AI=80             2.28330    2.28118    2.63197     235.13   18810.38
+K=512   AI=128            3.28784    3.27133    3.63680     163.29   20901.10
+K=1024  AI=256            5.95395    5.76272    6.94125      90.17   23083.65
+K=2048  AI=512           12.14710   11.28624   12.79533      44.20   22629.09
+
+--- ILP 对照：单依赖链 ---
+[1ch] K=512   AI=128      3.07882    3.07539    3.43504     174.38   22320.10
+[1ch] K=2048  AI=512     11.59910   11.24992   11.94134      46.29   23698.20
+
+-> roofline.csv 已写出
+==PROF== Disconnected from process 28477
+[28477] roofline_sweep@127.0.0.1
+  void fma_sweep<4>(const float *, float *, unsigned long) (262144, 1, 1)x(256, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Warning: Data collection happened without fixed GPU frequencies. Profiling results may be inconsistent.
+    Section: Command line profiler metrics
+    ------------------------ ----------- ------------
+    Metric Name              Metric Unit Metric Value
+    ------------------------ ----------- ------------
+    dram__bytes.sum                Mbyte       519.30
+    dram__bytes_op_read.sum        Mbyte       268.88
+    dram__bytes_op_write.sum       Mbyte       250.42
+    ------------------------ ----------- ------------
+
+  void fma_sweep<4>(const float *, float *, unsigned long) (262144, 1, 1)x(256, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Warning: Data collection happened without fixed GPU frequencies. Profiling results may be inconsistent.
+    Section: Command line profiler metrics
+    ------------------------ ----------- ------------
+    Metric Name              Metric Unit Metric Value
+    ------------------------ ----------- ------------
+    dram__bytes.sum                Mbyte       516.75
+    dram__bytes_op_read.sum        Mbyte       269.17
+    dram__bytes_op_write.sum       Mbyte       247.58
+    ------------------------ ----------- ------------
+

@@ -16,6 +16,9 @@ vectoradd
 divergence
 bandwith_scan
 pinned
+peaks
+roofline_sweep
+pointer_chase
 *.deb
 # 实验数据
 *.csv

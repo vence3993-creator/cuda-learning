@@ -1,0 +1,72 @@
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 27217 (/home/cheng/CUDA/week01_basics/day05/roofline_sweep)
+==PROF== Profiling "fma_sweep": 0%....50%....100% - 1 pass
+==PROF== Profiling "fma_sweep": 0%....50%....100% - 1 pass
+==PROF== Profiling "fma_sweep": 0%....50%....100% - 1 pass
+GPU              : NVIDIA GeForce RTX 5060 Ti (sm_120)
+SM 数量          : 36
+L2 cache         : 32.0 MB   <- 工作集必须远大于它，否则测的是 L2
+显存容量         : 7.9 GB
+理论显存带宽峰值 : 448.0 GB/s
+理论 FP32 峰值   : 24256.5 GFLOP/s
+平衡点 (ridge)   : 54.1 FLOP/B
+
+n = 67108864, 工作集 = 512 MiB (L2 的 16 倍)
+
+正确性自检通过（K=64）
+
+kernel                  median/ms     min/ms     max/ms       GB/s    GFLOP/s
+------------------------------------------------------------------------------
+K=4     AI=1              1.40266    1.38317    1.82333     382.75     382.75
+K=8     AI=2              1.40067    1.38579    1.82720     383.30     766.59
+K=16    AI=4              1.40061    1.34960    2.12013     383.31    1533.25
+K=32    AI=8              1.40198    1.38621    1.84982     382.94    3063.49
+K=64    AI=16             1.40470    1.38832    1.82931     382.20    6115.12
+K=128   AI=32             1.40659    1.40051    1.82880     381.68   12213.83
+K=192   AI=48             1.61770    1.61530    1.96461     331.87   15929.94
+K=256   AI=64             1.94512    1.94285    2.35440     276.01   17664.59
+K=320   AI=80             2.29946    2.28269    2.64656     233.48   18678.19
+K=512   AI=128            3.28874    3.28669    3.64192     163.25   20895.41
+K=1024  AI=256            5.76694    5.74730    6.11690      93.09   23832.20
+K=2048  AI=512           11.63485   11.28720   12.83834      46.14   23625.40
+
+--- ILP 对照：单依赖链 ---
+[1ch] K=512   AI=128      3.07792    3.07450    3.42762     174.43   22326.60
+[1ch] K=2048  AI=512     11.60042   11.24973   12.83645      46.28   23695.52
+
+-> roofline.csv 已写出
+==PROF== Disconnected from process 27217
+[27217] roofline_sweep@127.0.0.1
+  void fma_sweep<64>(const float *, float *, unsigned long) (262144, 1, 1)x(256, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Warning: Data collection happened without fixed GPU frequencies. Profiling results may be inconsistent.
+    Section: Command line profiler metrics
+    --------------------------------------------------- ----------- ------------
+    Metric Name                                         Metric Unit Metric Value
+    --------------------------------------------------- ----------- ------------
+    smsp__sass_thread_inst_executed_op_fadd_pred_on.sum        inst    402653184
+    smsp__sass_thread_inst_executed_op_ffma_pred_on.sum        inst   4294967296
+    smsp__sass_thread_inst_executed_op_fmul_pred_on.sum        inst            0
+    --------------------------------------------------- ----------- ------------
+
+  void fma_sweep<4>(const float *, float *, unsigned long) (262144, 1, 1)x(256, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Warning: Data collection happened without fixed GPU frequencies. Profiling results may be inconsistent.
+    Section: Command line profiler metrics
+    --------------------------------------------------- ----------- ------------
+    Metric Name                                         Metric Unit Metric Value
+    --------------------------------------------------- ----------- ------------
+    smsp__sass_thread_inst_executed_op_fadd_pred_on.sum        inst    402653184
+    smsp__sass_thread_inst_executed_op_ffma_pred_on.sum        inst    268435456
+    smsp__sass_thread_inst_executed_op_fmul_pred_on.sum        inst            0
+    --------------------------------------------------- ----------- ------------
+
+  void fma_sweep<4>(const float *, float *, unsigned long) (262144, 1, 1)x(256, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Warning: Data collection happened without fixed GPU frequencies. Profiling results may be inconsistent.
+    Section: Command line profiler metrics
+    --------------------------------------------------- ----------- ------------
+    Metric Name                                         Metric Unit Metric Value
+    --------------------------------------------------- ----------- ------------
+    smsp__sass_thread_inst_executed_op_fadd_pred_on.sum        inst    402653184
+    smsp__sass_thread_inst_executed_op_ffma_pred_on.sum        inst    268435456
+    smsp__sass_thread_inst_executed_op_fmul_pred_on.sum        inst            0
+    --------------------------------------------------- ----------- ------------
+
