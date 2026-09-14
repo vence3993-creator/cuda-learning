@@ -180,7 +180,8 @@ inline void print_result(const char* name, const BenchResult& r) {
 // ============================================================================
 // 6. 设备信息 / 理论峰值带宽
 // ============================================================================
-inline double query_peak_bandwidth_gbs(int dev = 0) {
+inline double query_peak_bandwidth_gbs(int dev = 0,double override_gbs = 0.0) {
+    if (override_gbs > 0.0) return override_gbs;
     int clk_khz = 0, bus_bits = 0;
     CUDA_CHECK(cudaDeviceGetAttribute(&clk_khz,  cudaDevAttrMemoryClockRate,      dev));
     CUDA_CHECK(cudaDeviceGetAttribute(&bus_bits, cudaDevAttrGlobalMemoryBusWidth, dev));
@@ -194,7 +195,37 @@ inline double query_peak_bandwidth_gbs(int dev = 0) {
     return 2.0 * clk_khz * 1e3 * (bus_bits / 8.0) / 1e9;
 }
 
-inline void print_device_info(int dev = 0) {
+// 每 SM 的 FP32 lane 数。算力 = SM × lanes × 2(FMA) × boost 频率
+inline int fp32_lanes_per_sm(int major, int minor) {
+    switch (major) {
+        case 7:  return 64;                        // Volta / Turing
+        case 8:  return (minor == 0) ? 64 : 128;   // A100=64，30/40 系=128
+        case 9: case 10: case 12: return 128;      // Hopper / Blackwell
+        default: return 0;
+    }
+}
+// 注意：cudaDevAttrClockRate 在部分驱动上返回空闲频率而非 boost 频率。
+// 用 nvidia-smi --query-gpu=clocks.sm --format=csv -lms 200 实测满载频率后手填。
+inline double query_peak_fp32_gflops(int dev = 0, double override_ghz = 0.0) {
+    int sm = 0, clk_khz = 0, major = 0, minor = 0;
+    CUDA_CHECK(cudaDeviceGetAttribute(&sm,      cudaDevAttrMultiProcessorCount, dev));
+    CUDA_CHECK(cudaDeviceGetAttribute(&clk_khz, cudaDevAttrClockRate,           dev));
+    CUDA_CHECK(cudaDeviceGetAttribute(&major,   cudaDevAttrComputeCapabilityMajor, dev));
+    CUDA_CHECK(cudaDeviceGetAttribute(&minor,   cudaDevAttrComputeCapabilityMinor, dev));
+    int lanes = fp32_lanes_per_sm(major, minor);
+    if (lanes == 0) return 0.0;
+    double ghz = (override_ghz > 0.0) ? override_ghz : clk_khz * 1e-6;
+    return sm * lanes * 2.0 * ghz;
+}
+// Roofline：给定 AI，这张卡"最多能跑多快"
+// 评价 kernel 用 实测 / roofline_attainable，而不是 实测 / 峰值算力
+inline double roofline_attainable_gflops(double ai, double peak_gflops, double peak_bw_gbs) {
+    return std::min(peak_gflops, ai * peak_bw_gbs);
+}
+
+inline void print_device_info(int dev = 0,
+                              double override_ghz = 0.0,
+                              double override_bw_gbs = 0.0) {
     cudaDeviceProp p;
     CUDA_CHECK(cudaGetDeviceProperties(&p, dev));
     printf("GPU              : %s (sm_%d%d)\n", p.name, p.major, p.minor);
@@ -202,7 +233,21 @@ inline void print_device_info(int dev = 0) {
     printf("L2 cache         : %.1f MB   <- 工作集必须远大于它，否则测的是 L2\n",
            p.l2CacheSize / 1048576.0);
     printf("显存容量         : %.1f GB\n", p.totalGlobalMem / 1073741824.0);
-    double peak = query_peak_bandwidth_gbs(dev);
-    if (peak > 0) printf("理论显存带宽峰值 : %.1f GB/s\n", peak);
+
+    double peak = query_peak_bandwidth_gbs(dev, override_bw_gbs);
+    double fp32 = query_peak_fp32_gflops(dev, override_ghz);
+
+    if (peak > 0) {
+        printf("显存带宽峰值     : %.1f GB/s%s\n", peak,
+               override_bw_gbs > 0 ? "  (实测)" : "  (驱动报告)");
+    }
+    if (fp32 > 0) {
+        printf("FP32 峰值        : %.1f GFLOP/s%s\n", fp32,
+               override_ghz > 0 ? "  (实测频率)"
+                                : "  (! 频率未校准，可能偏低)");
+    }
+    if (fp32 > 0 && peak > 0) {
+        printf("平衡点 (ridge)   : %.1f FLOP/B\n", fp32 / peak);
+    }
     printf("\n");
 }
