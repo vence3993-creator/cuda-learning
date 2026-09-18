@@ -1,29 +1,63 @@
+# ============ 编译产物 ============
 *.o
+*.d
 *.out
+*.exe
+*.so
+*.a
 build/
-# 无扩展名的可执行文件
+bin/
+
+# 无扩展名的可执行文件（存量，新的一律进 build/）
+hello
+deviceQuery
 vecadd
 vecadd_prof
-hello
-transpose
-deviceQuery
-bw_sweep
-bench
-bench1
-bin/
-build/
 vectoradd
 divergence
 bandwith_scan
 pinned
 peaks
+bench
+bench1
+bw_sweep
 roofline_sweep
 pointer_chase
-*.deb
-# 实验数据
+transpose
+
+# ============ Profiler 输出 ============
+*.ncu-rep
+*.nsys-rep
+*.qdrep
+*.qdstrm
+*.sqlite
+results/
+profile/
+
+# ============ 实验数据 ============
+# 默认忽略散落的中间数据
 *.csv
 *.png
-#python
-.venv/
-__pycache__/
+*.svg
+# 但整理过的、要长期保留的放行
+!data/**/*.csv
+!docs/**/*.png
+!docs/**/*.svg
 
+# ============ Python ============
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# ============ 编辑器 / 系统 ============
+.vscode/
+.idea/
+*.swp
+.DS_Store
+compile_commands.json
+
+# ============ 杂项 ============
+*.deb
+*.tar.gz
