@@ -1,0 +1,23 @@
+feat(w3d4): safe softmax 一 warp 一行，v4 达 D2D 带宽 98.9%
+
+- week03/day04/softmax_warp.cu：
+  v0 unsafe（对照）/ v1 一线程一行 / v2 warp 三遍读 global /
+  v3 warp 寄存器缓存 / v4 v3 + float4
+- 正确性框架：输出 NaN 毒化、CPU double 参考、
+  max_abs / rowsum / nan 三项判定；常规组 + 溢出组 [80, 100)
+- Makefile 增加 make ncu（DRAM / L2 / local ld / 寄存器 / occupancy / 指令数）
+
+结果（M=16384, N=1024, benchmark median）：
+  D2D copy  0.3468 ms  387.0 GB/s
+  v1        1.9044 ms   70.5 GB/s  (18.2%)
+  v2        0.3548 ms  378.2 GB/s  (97.7%)
+  v3        0.3529 ms  380.4 GB/s  (98.3%)
+  v4        0.3508 ms  382.6 GB/s  (98.9%)
+
+ncu 结论：
+- v2 读三遍 global，DRAM 只读 67.9 MB；重读由 L2 吸收
+  （L2 流量 251 MB vs v3 134 MB）
+- v1 同一时刻在途 64 MB > L2 32 MB，DRAM 读 210.7 MB（三遍），
+  occupancy 30%，实际 DRAM 带宽仅 142 GB/s
+- v4 load 请求降为 v3 的 1/4，指令数 -30%，耗时不变 → DRAM bound
+- v3 64 regs，occupancy 58% 仍满速；全部版本 local ld = 0
