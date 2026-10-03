@@ -24,6 +24,10 @@ bw_sweep
 roofline_sweep
 pointer_chase
 transpose
+transpose_smem
+reduce_basic
+softmax_warp
+layernorm_warp
 
 # ============ Profiler 输出 ============
 *.ncu-rep
